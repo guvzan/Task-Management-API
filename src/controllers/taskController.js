@@ -41,7 +41,19 @@ const createNewTask = async (req, res) => {
     }
 }
 
+const getTaskById = async (req, res, id) => {
+    try{
+        const task = await Task.findById(id);
+        res.writeHead(200, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({message: 'success', task}))
+    }catch (e){
+        res.writeHead(404, {'Content-Type': 'application/json'});
+        res.end(JSON.stringify({message: `Task with id: ${id} not found! Error: ${e}`}))
+    }
+}
+
 export {
     getAllTasks,
-    createNewTask
+    createNewTask,
+    getTaskById
 }
