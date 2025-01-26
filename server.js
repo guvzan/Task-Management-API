@@ -13,7 +13,7 @@ await connectToDB(process.env.DB_URI);
 
 const server = http.createServer(async (req, res) => {
     const {url, method} = req;
-    if(url === '/api/tasks' && method === 'GET'){
+    if(url.match(/^\/api\/tasks/) && method === 'GET'){
         return await getAllTasks(req, res);
     }else if(url === '/api/tasks' && method === 'POST'){
         return await createNewTask(req, res);
