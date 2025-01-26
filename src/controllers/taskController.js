@@ -10,8 +10,18 @@ const getAllTasks = async (req, res) => {
     const dbQuery = {};
     if(status) dbQuery.status = status;
     if(date) dbQuery.dueDate = date;
+
+    let limit = Number(fullURL.searchParams.get('limit')) || 5;
+    let page = Number(fullURL.searchParams.get('page')) || 0;
+    if(limit<1) limit = 1;
+    if(page<0) page = 0;
+
     try{
-        const tasks = await Task.find(dbQuery).sort([[sort, order]]);
+        const tasks = await Task
+            .find(dbQuery)
+            .sort([[sort, order]])
+            .skip(page*limit)
+            .limit(limit);
         if(!tasks?.length){
             res.writeHead(404, {'Content-Type': 'application/json'});
             return res.end(JSON.stringify({message: 'No tasks found!'}));
