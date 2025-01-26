@@ -5,11 +5,13 @@ const getAllTasks = async (req, res) => {
     const fullURL = new URL(req.url, `http://${req.headers.host}`);
     const status = fullURL.searchParams.get('status');
     const date = fullURL.searchParams.get('date');
+    const sort = fullURL.searchParams.get('sort') || 'dueDate';
+    const order = Number(fullURL.searchParams.get('order')) || -1;
     const dbQuery = {};
     if(status) dbQuery.status = status;
     if(date) dbQuery.dueDate = date;
     try{
-        const tasks = await Task.find(dbQuery);
+        const tasks = await Task.find(dbQuery).sort([[sort, order]]);
         if(!tasks?.length){
             res.writeHead(404, {'Content-Type': 'application/json'});
             return res.end(JSON.stringify({message: 'No tasks found!'}));
