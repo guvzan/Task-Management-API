@@ -8,6 +8,7 @@ import {
     getTaskById,
     updateTaskById
 } from "./src/controllers/taskController.js";
+import {loginUser, registerUser} from "./src/controllers/authController.js";
 
 await connectToDB(process.env.DB_URI);
 
@@ -26,9 +27,11 @@ const server = http.createServer(async (req, res) => {
     }else if(url.match(/\/api\/task\/[0-9]+/) && method === 'POST'){
         const id = url.split('/')[3];
         await updateTaskById(req, res, id);
+    }else if(url === '/api/register' && method === 'POST'){
+        await registerUser(req, res);
     }
     else{
-        return res.end(JSON.stringify({msg: 'Not found!'}));
+        return res.end(JSON.stringify({msg: 'Page not found!'}));
     }
 });
 
