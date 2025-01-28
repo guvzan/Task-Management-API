@@ -29,6 +29,8 @@ const server = http.createServer(async (req, res) => {
         await updateTaskById(req, res, id);
     }else if(url === '/api/register' && method === 'POST'){
         await registerUser(req, res);
+    }else if(url === '/api/login' && method === 'POST'){
+        await loginUser(req, res);
     }
     else{
         return res.end(JSON.stringify({msg: 'Page not found!'}));
