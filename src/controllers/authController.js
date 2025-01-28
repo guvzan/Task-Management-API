@@ -1,5 +1,6 @@
 import User from "../models/userModel.js";
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const registerUser = (req, res) => {
     try{
@@ -17,7 +18,19 @@ const registerUser = (req, res) => {
             }
             const hashedPassword = bcrypt.hashSync(password, 7);
             user = await User.create({username, password: hashedPassword});
-            res.writeHead(201, {'Content-Type': 'application/json'});
+
+            const jwtToken = jwt.sign(
+                {userId: user._id},
+                process.env.JWT_SECRET,
+                {
+                    expiresIn: '1d'
+                }
+            );
+
+            res.writeHead(201, {
+                'Content-Type': 'application/json',
+                'Set-Cookie': `jwt=${jwtToken}; Secure; HttpOnly; SameSite=Strict`
+            });
             return res.end(JSON.stringify({message: 'success', user}));
         });
     }catch (e){
