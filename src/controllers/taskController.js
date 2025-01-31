@@ -1,5 +1,6 @@
 import Task from "../models/taskModel.js";
 import {URL, URLSearchParams} from "node:url";
+import {canViewTasks} from "../middleware/authMiddleware.js";
 
 const getAllTasks = async (req, res) => {
     const fullURL = new URL(req.url, `http://${req.headers.host}`);
@@ -26,8 +27,9 @@ const getAllTasks = async (req, res) => {
             res.writeHead(404, {'Content-Type': 'application/json'});
             return res.end(JSON.stringify({message: 'No tasks found!'}));
         }
+        const allowedTasks = canViewTasks(req.user, tasks)
         res.writeHead(200, {'Content-Type': 'application/json'});
-        return res.end(JSON.stringify({tasks}));
+        return res.end(JSON.stringify({tasks: allowedTasks}));
     }catch (e){
         res.writeHead(500, {'Content-Type': 'application/json'});
         return res.end(JSON.stringify(JSON.stringify({message: `Cannot get all tasks: ${e}`})));
@@ -48,7 +50,8 @@ const createNewTask = async (req, res) => {
                     title,
                     description,
                     status,
-                    dueDate
+                    dueDate,
+                    createdBy: req.user
                 });
                 await task.save();
                 res.writeHead(201, {'Content-Type': 'application/json'});
