@@ -1,6 +1,6 @@
 import Task from "../models/taskModel.js";
 import {URL, URLSearchParams} from "node:url";
-import {canViewTasks} from "../middleware/authMiddleware.js";
+import {filterAllowedTasks, isTaskCreatedByUser} from "../middleware/authMiddleware.js";
 
 const getAllTasks = async (req, res) => {
     const fullURL = new URL(req.url, `http://${req.headers.host}`);
@@ -27,7 +27,7 @@ const getAllTasks = async (req, res) => {
             res.writeHead(404, {'Content-Type': 'application/json'});
             return res.end(JSON.stringify({message: 'No tasks found!'}));
         }
-        const allowedTasks = canViewTasks(req.user, tasks)
+        const allowedTasks = filterAllowedTasks(req.user, tasks)
         res.writeHead(200, {'Content-Type': 'application/json'});
         return res.end(JSON.stringify({tasks: allowedTasks}));
     }catch (e){
@@ -69,9 +69,9 @@ const createNewTask = async (req, res) => {
 const getTaskById = async (req, res, id) => {
     try{
         const task = await Task.findById(id);
-        if(!task){
+        if(!task || !isTaskCreatedByUser(task, req.user)){
             res.writeHead(404, {'Content-Type': 'application/json'});
-            return res.end(JSON.stringify({message: `Task with id ${id} not found`}))
+            return res.end(JSON.stringify({message: `Task with id ${id} not found or you don\'t have access to it!`}))
         }
         res.writeHead(200, {'Content-Type': 'application/json'});
         return res.end(JSON.stringify({message: 'success', task}))
@@ -83,11 +83,12 @@ const getTaskById = async (req, res, id) => {
 
 const deleteTaskById = async (req, res, id) => {
     try{
-        const task = await Task.findByIdAndDelete(id);
-        if(!task){
+        const task = await Task.findById(id);
+        if(!task || !isTaskCreatedByUser(task, req.user)){
             res.writeHead(404, {'Content-Type': 'application/json'});
-            return res.end(JSON.stringify({message: `Task with id: ${id} does not exist!`}));
+            return res.end(JSON.stringify({message: `Task with id: ${id} does not exist or you can\'t delete it!`}));
         }
+        await Task.findByIdAndDelete(id);
         res.writeHead(200, {'Content-Type': 'application/json'});
         return res.end(JSON.stringify({message: 'success', task}));
     }catch(e){
@@ -107,9 +108,9 @@ const updateTaskById = async (req, res, id) => {
                 body = JSON.parse(Buffer.concat(body).toString());
                 const {title, description, status, dueDate} = body;
                 const task = await Task.findById(id);
-                if(!task){
+                if(!task || !isTaskCreatedByUser(task, req.user)){
                     res.writeHead(404, {'Content-Type': 'application/json'});
-                    return res.end(JSON.stringify({message: `Task with id ${id} not found`}));
+                    return res.end(JSON.stringify({message: `Task with id ${id} not found or you can\'t modify it!`}));
                 }
                 const taskData = {
                     title: title || task.title,

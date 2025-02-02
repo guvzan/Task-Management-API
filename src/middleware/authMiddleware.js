@@ -8,7 +8,7 @@ const setUser = async (req) => {
         if(!cookie) return;
         const jwtData = jwt.verify(cookie.slice(4), process.env.JWT_SECRET);
         if(!jwtData) return;
-        req.user = await User.findById(jwtData.userId);
+        req.user = await User.findById(jwtData.userId) || null;
     }catch(e){
         console.log(`Error when reading jwt token: ${e}`);
     }
@@ -19,15 +19,21 @@ const notAuthorized = async (req, res) => {
     return res.end(JSON.stringify({message: 'Sign in to access this content!'}));
 }
 
-const canViewTasks = (user, tasks) => {
+const filterAllowedTasks = (user, tasks) => {
     if(user.role === 'admin') return tasks;
     return tasks.filter(task => {
         return task.createdBy.toHexString() === user.id;
     });
 }
 
+const isTaskCreatedByUser = (task, user) => {
+    if(user.role === 'admin') return true;
+    return task.createdBy.toHexString() === user.id;
+}
+
 export {
     setUser,
     notAuthorized,
-    canViewTasks
+    filterAllowedTasks,
+    isTaskCreatedByUser
 }

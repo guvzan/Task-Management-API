@@ -16,33 +16,35 @@ await connectToDB(process.env.DB_URI);
 
 const server = http.createServer(async (req, res) => {
     const {url, method} = req;
+    await setUser(req); // Set req.user = user || null
 
-    if(url.match(/^\/api\/tasks/) && method === 'GET'){
-        await setUser(req);
+    if(url.match(/^\/api\/tasks\/?$/) && method === 'GET'){
         if(!req.user) return await notAuthorized(req, res);
         return await getAllTasks(req, res);
 
-    }else if(url === '/api/tasks' && method === 'POST'){
-        await setUser(req);
+    }else if(url.match(/^\/api\/tasks\/?$/) && method === 'POST'){
         if(!req.user) return await notAuthorized(req, res);
         return await createNewTask(req, res);
 
-    }else if(url.match(/\/api\/task\/[0-9]+/) && method === 'GET'){
+    }else if(url.match(/\/api\/task\/[0-9]+\/?$/) && method === 'GET'){
         const id = url.split('/')[3];
+        if(!req.user) return await notAuthorized(req, res);
         return await getTaskById(req, res, id);
 
-    }else if(url.match(/\/api\/task\/delete\/[0-9]+/) && method === 'GET'){
+    }else if(url.match(/\/api\/task\/delete\/[0-9]+\/?$/) && method === 'GET'){
         const id = url.split('/')[4];
+        if(!req.user) return await notAuthorized(req, res);
         return await deleteTaskById(req, res, id);
 
-    }else if(url.match(/\/api\/task\/[0-9]+/) && method === 'POST'){
+    }else if(url.match(/\/api\/task\/[0-9]+\/?$/) && method === 'POST'){
         const id = url.split('/')[3];
+        if(!req.user) return await notAuthorized(req, res);
         await updateTaskById(req, res, id);
 
-    }else if(url === '/api/register' && method === 'POST'){
+    }else if(url.match(/^\/api\/register\/?$/) && method === 'POST'){
         await registerUser(req, res);
 
-    }else if(url === '/api/login' && method === 'POST'){
+    }else if(url.match(/^\/api\/login\/?$/) && method === 'POST'){
         await loginUser(req, res);
     }
 
